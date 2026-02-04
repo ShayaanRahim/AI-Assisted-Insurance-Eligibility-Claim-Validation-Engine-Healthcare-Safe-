@@ -9,19 +9,22 @@ from sqlmodel import SQLModel, Field, Column
 from sqlalchemy import DateTime, func
 from sqlalchemy.dialects.postgresql import JSONB
 
-class Claim(str, Enum):
+
+class ClaimStatus(str, Enum):
     draft = "draft"
     validated = "validated"
     rejected = "rejected"
     needs_review = "needs_review"
 
-class Validation(str, Enum):
+
+class ValidationSource(str, Enum):
     rules_engine = "rules_engine"
     ai = "ai"
 
-class Review(str, Enum):
+
+class ReviewDecision(str, Enum):
     approved = "approved"
-    overriden = "overriden"
+    overridden = "overridden"
     rejected = "rejected"
 
 
@@ -34,7 +37,7 @@ class Claim(SQLModel, table=True):
     coverage_payload: Dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))
     claim_payload: Dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))
 
-    status: Claim = Field(default=Claim.draft, nullable=False)
+    status: ClaimStatus = Field(default=ClaimStatus.draft, nullable=False)
 
     created_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -51,7 +54,7 @@ class Validation(SQLModel, table=True):
 
     claim_id: UUID = Field(foreign_key="claims.id", index=True, nullable=False)
 
-    source: Validation = Field(nullable=False)
+    source: ValidationSource = Field(nullable=False)
 
     model_name: Optional[str] = Field(default=None)
     prompt_version: Optional[str] = Field(default=None)
@@ -77,13 +80,10 @@ class ReviewEvent(SQLModel, table=True):
     validation_id: UUID = Field(foreign_key="validations.id", index=True, nullable=False)
 
     reviewer_role: str = Field(default="reviewer", nullable=False)
-    decision: Review = Field(nullable=False)
+    decision: ReviewDecision = Field(nullable=False)
 
     reviewer_notes: Optional[str] = Field(default=None)
 
     created_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     )
-
-
-
